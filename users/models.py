@@ -5,7 +5,6 @@ class CustomUser(AbstractUser):
     username = None
 
     email = models.EmailField(unique=True)
-    email_verificated = models.BooleanField(default=False)
     first_name = models.CharField(max_length=30, verbose_name='Имя', null=True, blank=True)
     last_name = models.CharField(max_length=30, verbose_name='Фамилия', null=True, blank=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
