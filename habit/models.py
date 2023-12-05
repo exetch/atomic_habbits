@@ -23,3 +23,11 @@ class Habit(models.Model):
     class Meta:
         verbose_name = "Привычка"
         verbose_name_plural = "Привычки"
+
+class TelegramUser(models.Model):
+    chat_id = models.CharField(max_length=100, unique=True)
+    is_account_linked = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='telegram_profile', blank=True, null=True)
+
+    def __str__(self):
+        return f"chat_id {self.chat_id}"

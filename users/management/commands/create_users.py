@@ -77,15 +77,3 @@ class Command(BaseCommand):
             self.stdout.write(f'Создана привычка {habit.action} для пользователя {user.email}')
 
 
-{
-    "location": "дома",
-    "time": "10:00",
-    "action": "Писать книгу",
-    "is_pleasant": "false",
-    "linked_habit": 33,
-    "frequency": 1,
-    "reward": "маффин",
-    "duration": 100,
-    "is_public": "true"
-
-}

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
     "habit",
     "rest_framework",
     "rest_framework_simplejwt",
+    "drf_yasg",
+    "django_celery_beat",
 
 ]
 
@@ -158,3 +161,26 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+CELERY_BROKER_URL = 'redis://localhost:6379'
+
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+CELERY_TIMEZONE = "Australia/Tasmania"
+
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+CELERY_BEAT_SCHEDULE = {
+    'send-chat-id': {
+        'task': 'habit.tasks.check_and_send_reminders',
+        'schedule': timedelta(minutes=5),
+    },
+    'check-and-send-reminders': {
+        'task': 'habit.tasks.send_chat_id',
+        'schedule': timedelta(seconds=15),
+    },
+}
+
+TELEGRAM_API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
