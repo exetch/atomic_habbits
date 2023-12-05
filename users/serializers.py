@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -26,5 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
            Если пользователь является владельцем объекта, объект возвращается без изменений.
            """
         ret = super().to_representation(instance)
-        ret.pop('password', None)
+        request = self.context.get('request', None)
+        if request and request.user != instance:
+            sensitive_fields = ['password', 'last_name']
+            for field in sensitive_fields:
+                ret.pop(field, None)
         return ret

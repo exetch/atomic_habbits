@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 from users.models import CustomUser
 from rest_framework import status
 
+
 class CustomUserAPITestCase(APITestCase):
     def setUp(self):
         self.user = CustomUser.objects.create(email='testuser@example.com', password='testpass123')
