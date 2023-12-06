@@ -1,13 +1,14 @@
 import os
 import sys
 import django
+from .telegram_utils import send_telegram_message
 
 sys.path.append('C:/Users/ASUS/PycharmProjects/atomic_habbits')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 from rest_framework.test import APITestCase
 from users.models import CustomUser
-from .models import Habit
+from .models import Habit, TelegramUser
 from django.urls import reverse
 from rest_framework import status
 
@@ -33,10 +34,23 @@ class HabitAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Habit.objects.count(), 3)
 
+        #проверка метода __str__
+        new_habit = Habit.objects.get(action="Утренняя пробежка")
+        self.assertEqual(str(new_habit),
+                         f"{new_habit.action} в {new_habit.time.strftime('%H:%M:%S')} в {new_habit.location}")
+        TelegramUser.objects.create(
+            chat_id='123456789',
+            is_account_linked=True,
+            user=self.user
+        )
+        telegram_user = TelegramUser.objects.get(chat_id=123456789)
+        expected_object_name = f'chat_id {telegram_user.chat_id}'
+        self.assertEqual(expected_object_name, str(telegram_user))
+
     def test_get_habits(self):
         habit = Habit.objects.create(user=self.user, location="Дом", time="07:00:00",
                                      action="Чтение", duration=30, is_public=True)
-        response = self.client.get(f'/habits/')
+        response = self.client.get('/habits/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 3)
 

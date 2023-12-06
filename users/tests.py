@@ -1,7 +1,7 @@
 import os
-import sys
+from django.core.management import call_command
+from django.test import TestCase
 import django
-sys.path.append('C:/Users/ASUS/PycharmProjects/online_academy')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 from rest_framework.test import APITestCase
@@ -23,7 +23,7 @@ class CustomUserAPITestCase(APITestCase):
         }
 
     def test_create_user(self):
-        response = self.client.post(f'/users/', self.user_data)
+        response = self.client.post('/users/', self.user_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CustomUser.objects.count(), 2)
 
@@ -44,3 +44,20 @@ class CustomUserAPITestCase(APITestCase):
         response = self.client.delete(f'/users/{self.user.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(CustomUser.objects.count(), 0)
+
+class CreateSuperUserCommandTest(TestCase):
+    def test_create_superuser(self):
+        call_command('create_superuser')
+
+        user_exists = CustomUser.objects.filter(
+            email='example@admina.net',
+            first_name='admin',
+            last_name='adminov',
+            is_superuser=True,
+            is_staff=True,
+            is_active=True,
+        ).exists()
+        self.assertTrue(user_exists)
+
+        user = CustomUser.objects.get(email='example@admina.net')
+        self.assertTrue(user.check_password('123qwe456rty'))

@@ -75,5 +75,3 @@ class Command(BaseCommand):
                 is_public=fake.boolean()
             )
             self.stdout.write(f'Создана привычка {habit.action} для пользователя {user.email}')
-
-

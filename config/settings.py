@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_yasg",
     "django_celery_beat",
+    "corsheaders",
 
 ]
 
@@ -65,6 +66,7 @@ REST_FRAMEWORK = {'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSc
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -173,14 +175,24 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
 CELERY_BEAT_SCHEDULE = {
-    'send-chat-id': {
+    'check-and-send-reminders': {
         'task': 'habit.tasks.check_and_send_reminders',
         'schedule': timedelta(minutes=5),
     },
-    'check-and-send-reminders': {
-        'task': 'habit.tasks.send_chat_id',
+    'receiving-email-for-telegram-binding': {
+        'task': 'habit.tasks.receiving_email_for_telegram_binding',
         'schedule': timedelta(seconds=15),
     },
 }
 
 TELEGRAM_API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
+
+CORS_ALLOWED_ORIGINS = [
+    "https://www.example.com",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.example.com"
+]
+
+CORS_ALLOW_ALL_ORIGINS = False

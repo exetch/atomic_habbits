@@ -6,7 +6,8 @@ from habit.models import Habit
 def validate_duration(value):
     """Проверка продолжительности выполнения привычки."""
     if value > 120:
-        raise serializers.ValidationError("Продолжительность выполнения привычки не должна превышать 120 секунд.")
+        raise serializers.ValidationError("Продолжительность выполнения привычки"
+                                          " не должна превышать 120 секунд.")
     return value
 
 
@@ -29,6 +30,7 @@ def validate_habit_data(data):
         linked_habit_instance = Habit.objects.filter(id=linked_habit.id, is_pleasant=True).first()
         if not linked_habit_instance:
             raise serializers.ValidationError(
-                "В связанные привычки могут попадать только привычки с признаком приятной привычки.")
+                "В связанные привычки могут попадать "
+                "только привычки с признаком приятной привычки.")
 
     return data

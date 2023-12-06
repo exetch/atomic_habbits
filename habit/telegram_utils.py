@@ -1,14 +1,12 @@
-import os
-import django
-import requests
 from config import settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-django.setup()
 from users.models import CustomUser
 from habit.models import TelegramUser
+import requests
 
 
 bot_token = settings.TELEGRAM_API_TOKEN
+
+
 def send_telegram_message(chat_id, message, bot_token):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {

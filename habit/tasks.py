@@ -34,7 +34,8 @@ def check_and_send_reminders():
     for habit in habits:
         if habit.user.telegram_profile.exists():
             chat_id = habit.user.telegram_profile.first().chat_id
-            message = f"Напоминание: {habit.action} в {habit.location} в {habit.time.strftime('%H:%M')}"
+            message = f"Напоминание: {habit.action} в {habit.location} " \
+                      f"в {habit.time.strftime('%H:%M')}"
             send_telegram_message(chat_id, message, bot_token)
 
 
