@@ -116,5 +116,12 @@
 ```bash
  coverage run --source='.' manage.py test
 ```
+Создайте отчет в консоли:
+```bash
+ coverage report
+```
+Генерируйте HTML-отчет для более детального анализа:
 
-
+```bash
+ coverage html
+```
