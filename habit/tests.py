@@ -1,9 +1,5 @@
 import os
-import sys
 import django
-from .telegram_utils import send_telegram_message
-
-sys.path.append('C:/Users/ASUS/PycharmProjects/atomic_habbits')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 from rest_framework.test import APITestCase
@@ -34,7 +30,7 @@ class HabitAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Habit.objects.count(), 3)
 
-        #проверка метода __str__
+        # проверка метода __str__
         new_habit = Habit.objects.get(action="Утренняя пробежка")
         self.assertEqual(str(new_habit),
                          f"{new_habit.action} в {new_habit.time.strftime('%H:%M:%S')} в {new_habit.location}")
@@ -146,6 +142,20 @@ class HabitAPITestCase(APITestCase):
         self.assertIn("В связанные привычки могут попадать только привычки с признаком приятной привычки",
                       str(response.data))
 
+    def test_habit_frequency_validation(self):
+        url = reverse('habit-list-create')
+        data = {
+            "location": "Дом",
+            "time": "08:00:00",
+            "action": "Утренняя пробежка",
+            "duration": 20,
+            "is_public": True,
+            "frequency": 8
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Нельзя выполнять привычку реже, чем 1 раз в 7 дней", str(response.data))
+
     def test_get_public_habits(self):
         Habit.objects.create(user=self.user, location="Дом", time="07:00:00",
                              action="Чтение", duration=30, is_public=True)
@@ -161,3 +171,51 @@ class HabitAPITestCase(APITestCase):
         # Проверка, что привычки принадлежат разным пользователям
         habit_user_emails = set(habit['user'] for habit in response.data['results'])
         self.assertEqual(len(habit_user_emails), 2)
+
+
+from unittest import TestCase, mock
+from habit.telegram_utils import send_telegram_message, get_updates
+
+
+class TestSendTelegramMessage(TestCase):
+    @mock.patch('habit.telegram_utils.requests.post')
+    def test_send_telegram_message(self, mock_post):
+        mock_post.return_value.ok = True
+        chat_id = '123456'
+        message = 'Test Message'
+        bot_token = 'test_token'
+
+        success = send_telegram_message(chat_id, message, bot_token)
+
+        self.assertTrue(success)
+        mock_post.assert_called_once_with(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": chat_id, "text": message}
+        )
+
+
+class TestGetUpdates(TestCase):
+    @mock.patch('habit.telegram_utils.requests.get')
+    @mock.patch('habit.telegram_utils.requests.post')
+    def test_get_updates(self, mock_post, mock_get):
+        mock_response = {
+            "ok": True,
+            "result": [
+                {"update_id": 1, "message": {"chat": {"id": "chat_id"}, "text": "test@example.com"}}
+            ]
+        }
+        mock_get.return_value.json.return_value = mock_response
+
+        mock_post.return_value.ok = True
+
+        user = CustomUser.objects.create(email='test@example.com')
+
+        get_updates('test_token')
+
+        telegram_user = TelegramUser.objects.get(chat_id="chat_id")
+        self.assertEqual(telegram_user.user, user)
+
+        mock_post.assert_called_with(
+            f"https://api.telegram.org/bottest_token/sendMessage",
+            json={"chat_id": "chat_id", "text": "Ваш аккаунт успешно связан с Telegram."}
+        )
