@@ -27,8 +27,8 @@ class HabitListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = []
-    ordering_fields = []
+    filterset_fields = ['location', 'is_public', 'is_pleasant', 'action']
+    ordering_fields = ['time', 'action', 'frequency']
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
