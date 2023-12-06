@@ -15,6 +15,16 @@ python-dotenv = "^1.0.0"
 pillow = "9.5.0"
 djangorestframework-simplejwt = "^5.3.0"
 django-filter = "^23.4"
+faker = "^20.1.0"
+coverage = "^7.3.2"
+drf-yasg = "^1.21.7"
+celery = "^5.3.6"
+eventlet = "^0.33.3"
+django-celery-beat = "^2.5.0"
+redis = "^5.0.1"
+requests = "^2.31.0"
+django-cors-headers = "^4.3.1"
+flake8 = "^6.1.0"
 
 
 [build-system]
