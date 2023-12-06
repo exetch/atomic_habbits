@@ -1,3 +1,5 @@
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from rest_framework import generics, permissions
 from .models import Habit
 from .pagination import StandardResultsSetPagination
@@ -24,6 +26,9 @@ class HabitListCreateView(generics.ListCreateAPIView):
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = []
+    ordering_fields = []
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
