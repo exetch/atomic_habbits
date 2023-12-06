@@ -26,6 +26,9 @@ class CustomUserAPITestCase(APITestCase):
         response = self.client.post('/users/', self.user_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CustomUser.objects.count(), 2)
+        # тест метода __str__
+        expected_email_str = 'testuser@example.com'
+        self.assertEqual(str(self.user), expected_email_str)
 
     def test_retrieve_user(self):
         response = self.client.get(f'/users/{self.user.id}/')
