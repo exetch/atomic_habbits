@@ -1,8 +1,7 @@
 from celery import shared_task
 from config import settings
-from datetime import datetime, timedelta
 from django.utils import timezone
-from .models import Habit
+from .models import Habit, HabitCompletion
 from .telegram_utils import get_updates, send_telegram_message
 
 bot_token = settings.TELEGRAM_API_TOKEN
@@ -32,7 +31,7 @@ def check_and_send_reminders():
             chat_id = habit.user.telegram_profile.first().chat_id
             message = f"Напоминание: {habit.action} в {habit.location} в {habit.time.strftime('%H:%M')}"
             send_telegram_message(chat_id, message, bot_token)
-
+            record_habit_completion(habit)
 
 def get_due_habits():
     """
@@ -54,5 +53,14 @@ def get_due_habits():
         last_completion = habit.completions.order_by('-completion_date').first()
         if not last_completion or (now.date() - last_completion.completion_date).days >= habit.frequency:
             due_habits.append(habit)
-
     return due_habits
+
+
+def record_habit_completion(habit):
+    """
+    Создает запись об исполнении привычки в HabitCompletion.
+
+    Аргументы:
+        habit (Habit): Объект привычки, для которой необходимо записать исполнение.
+    """
+    HabitCompletion.objects.create(habit=habit, completion_date=timezone.now().date())
