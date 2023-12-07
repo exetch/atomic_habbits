@@ -35,10 +35,10 @@ class TelegramUser(models.Model):
     def __str__(self):
         return f"chat_id {self.chat_id}"
 
+
 class HabitCompletion(models.Model):
     habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='completions')
     completion_date = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"Привычка {self.habit.action} выполнена {self.completion_date}"
-

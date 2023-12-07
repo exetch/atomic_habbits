@@ -29,9 +29,11 @@ def check_and_send_reminders():
     for habit in due_habits:
         if habit.user.telegram_profile.exists():
             chat_id = habit.user.telegram_profile.first().chat_id
-            message = f"Напоминание: {habit.action} в {habit.location} в {habit.time.strftime('%H:%M')}"
+            message = f"Напоминание: {habit.action} в {habit.location} " \
+                      f"в {habit.time.strftime('%H:%M')}"
             send_telegram_message(chat_id, message, bot_token)
             record_habit_completion(habit)
+
 
 def get_due_habits():
     """
@@ -51,7 +53,8 @@ def get_due_habits():
 
     for habit in Habit.objects.filter(time__gte=now.time(), time__lte=ten_minutes_from_now.time()):
         last_completion = habit.completions.order_by('-completion_date').first()
-        if not last_completion or (now.date() - last_completion.completion_date).days >= habit.frequency:
+        if not last_completion or \
+                (now.date() - last_completion.completion_date).days >= habit.frequency:
             due_habits.append(habit)
     return due_habits
 
