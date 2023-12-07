@@ -37,6 +37,13 @@ class Command(BaseCommand):
     def create_habits_for_user(self, user):
         fake = Faker()
         for _ in range(10):
+            LOCATIONS = [
+                "Дом",
+                "Работа",
+                "Кафе",
+                "Парк"
+            ]
+
             ACTIONS = [
                 "Заниматься йогой",
                 "Читать книгу",
@@ -64,7 +71,7 @@ class Command(BaseCommand):
             ]
             habit = Habit.objects.create(
                 user=user,
-                location=fake.city(),
+                location=choice(LOCATIONS),
                 time=fake.time(),
                 action=choice(ACTIONS),
                 is_pleasant=fake.boolean(),
