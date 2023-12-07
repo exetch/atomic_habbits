@@ -31,6 +31,13 @@ def check_and_send_reminders():
             chat_id = habit.user.telegram_profile.first().chat_id
             message = f"Напоминание: {habit.action} в {habit.location} " \
                       f"в {habit.time.strftime('%H:%M')}"
+
+            if habit.reward:
+                message += f" Награда за выполнение: {habit.reward}."
+
+            if habit.linked_habit:
+                linked_habit_action = habit.linked_habit.action
+                message += f" Связанная привычка: {linked_habit_action}."
             send_telegram_message(chat_id, message, bot_token)
             record_habit_completion(habit)
 
