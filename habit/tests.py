@@ -4,10 +4,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 from rest_framework.test import APITestCase
 from users.models import CustomUser
-from .models import Habit, TelegramUser
+from .models import Habit, TelegramUser, HabitCompletion
 from django.urls import reverse
 from rest_framework import status
-
+from django.utils import timezone
+from unittest import TestCase, mock
+from habit.telegram_utils import send_telegram_message, get_updates
+from .tasks import check_and_send_reminders, get_due_habits, record_habit_completion
+from datetime import timedelta
 
 class HabitAPITestCase(APITestCase):
     def setUp(self):
@@ -21,6 +25,7 @@ class HabitAPITestCase(APITestCase):
         self.linked_habit_not_pleasant = Habit.objects.create(user=self.user, location="Дом", time="07:00:00",
                                                               action="Работа", duration=30, is_public=True,
                                                               is_pleasant=False)
+
 
     def test_create_habit(self):
         url = reverse('habit-list-create')
@@ -172,12 +177,34 @@ class HabitAPITestCase(APITestCase):
         habit_user_emails = set(habit['user'] for habit in response.data['results'])
         self.assertEqual(len(habit_user_emails), 2)
 
+class TestTelegramIntegration(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create(email='test@example.com', password='testpass123')
+        self.habit = Habit.objects.create(
+            user=self.user,
+            location="Дом",
+            time=timezone.now().time(),
+            action="Чтение",
+            frequency=1
+        )
+        self.habit_due_soon = Habit.objects.create(
+            user=self.user,
+            location="Дом",
+            time=(timezone.now() + timedelta(minutes=5)).time(),
+            action="Утренняя пробежка",
+            frequency=1
+        )
 
-from unittest import TestCase, mock
-from habit.telegram_utils import send_telegram_message, get_updates
+        self.habit_not_due_soon = Habit.objects.create(
+            user=self.user,
+            location="Дом",
+            time=(timezone.now() + timedelta(hours=2)).time(),
+            action="Вечерняя йога",
+            frequency=1
+        )
+        self.chat_id = '123456789'
+        TelegramUser.objects.create(user=self.user, chat_id=self.chat_id, is_account_linked=True)
 
-
-class TestSendTelegramMessage(TestCase):
     @mock.patch('habit.telegram_utils.requests.post')
     def test_send_telegram_message(self, mock_post):
         mock_post.return_value.ok = True
@@ -193,8 +220,6 @@ class TestSendTelegramMessage(TestCase):
             json={"chat_id": chat_id, "text": message}
         )
 
-
-class TestGetUpdates(TestCase):
     @mock.patch('habit.telegram_utils.requests.get')
     @mock.patch('habit.telegram_utils.requests.post')
     def test_get_updates(self, mock_post, mock_get):
@@ -208,7 +233,7 @@ class TestGetUpdates(TestCase):
 
         mock_post.return_value.ok = True
 
-        user = CustomUser.objects.create(email='test@example.com')
+        user = self.user
 
         get_updates('test_token')
 
@@ -219,3 +244,36 @@ class TestGetUpdates(TestCase):
             f"https://api.telegram.org/bottest_token/sendMessage",
             json={"chat_id": "chat_id", "text": "Ваш аккаунт успешно связан с Telegram."}
         )
+
+    def test_get_due_habits(self):
+        due_habits = get_due_habits()
+        self.assertIn(self.habit_due_soon, due_habits)
+        self.assertNotIn(self.habit_not_due_soon, due_habits)
+
+    def test_record_habit_completion(self):
+        record_habit_completion(self.habit)
+
+        completion = HabitCompletion.objects.filter(habit=self.habit).first()
+        self.assertIsNotNone(completion)
+        self.assertEqual(completion.habit, self.habit)
+        self.assertEqual(completion.completion_date, timezone.now().date())
+
+    @mock.patch('habit.tasks.send_telegram_message')
+    @mock.patch('habit.tasks.get_due_habits')
+    def test_check_and_send_reminders(self, mock_get_due_habits, mock_send_telegram_message):
+        mock_get_due_habits.return_value = [self.habit]
+        mock_send_telegram_message.return_value = True
+
+        check_and_send_reminders()
+
+        mock_get_due_habits.assert_called_once()
+        mock_send_telegram_message.assert_called_once_with('123456789',
+                                                           f"Напоминание: Чтение в Дом в {self.habit.time.strftime('%H:%M')}",
+                                                           mock.ANY)
+
+        self.assertEqual(self.habit.completions.count(), 1)
+
+    def tearDown(self):
+        # Очистка после тестов
+        self.user.delete()
+        self.habit.delete()
